@@ -56,11 +56,13 @@ pip install -r requirements.txt
 Contents of `requirements.txt`:
 
 ```txt
-transformers
-peft
-datasets
-torch
-bitsandbytes
+transformers==4.40.1
+peft==0.10.0
+datasets==2.19.1
+torch>=2.0
+bitsandbytes==0.43.1
+accelerate==0.29.3
+sentencepiece
 ```
 
 ---
