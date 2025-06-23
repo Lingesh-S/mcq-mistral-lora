@@ -7,10 +7,13 @@ This repository contains training and inference notebooks for fine-tuning the Mi
 ## 📦 Files Included
 
 ```
-mcq-mistral-lora-finetune/
-├── train_lora_colab.ipynb            # LoRA fine-tuning + inference notebook
+mcq-mistral-lora/
+├──.gitignore        
+├── LICENCE                            
 ├── README.md                         # This file
 ├── requirements.txt                  # Dependencies
+├── mcq_mistral_lora_ft.ipynb         # LoRA fine-tuning + inference notebook
+
 ```
 
 ---
