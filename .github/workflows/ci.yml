@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Validate notebook
+        run: python -c "import nbformat; nbformat.validate(nbformat.read('mcq_mistral_lora_ft.ipynb', as_version=4)); print('notebook ok')"
+      - name: Test data pipeline
+        run: pytest -q
