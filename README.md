@@ -8,12 +8,12 @@ This repository contains training and inference notebooks for fine-tuning the Mi
 
 ```
 mcq-mistral-lora/
-├──.gitignore        
-├── LICENCE                            
-├── README.md                         # This file
-├── requirements.txt                  # Dependencies
-├── mcq_mistral_lora_ft.ipynb         # LoRA fine-tuning + inference notebook
-
+├── mcq_mistral_lora_ft.ipynb   # QLoRA fine-tuning, evaluation, push to Hub, inference
+├── mcq_lora/data.py            # Prompt template + preprocessing shared by training and inference
+├── data/sample.jsonl           # 5 example records showing the dataset format
+├── tests/                      # CPU-only tests for the data pipeline
+├── requirements.txt            # GPU training / inference dependencies
+└── requirements-dev.txt        # pytest, ruff, nbformat (no GPU needed)
 ```
 
 ---
@@ -22,50 +22,41 @@ mcq-mistral-lora/
 
 👉 [Lingesh-S/mcq-mistral-lora](https://huggingface.co/Lingesh-S/mcq-mistral-lora)
 
-You can directly run inference from the Hugging Face Hub or clone this repo to reproduce the fine-tuning process.
-
 ---
 
 ## 🚀 How to Use
 
 ### 🧪 Fine-tuning
 
-Run this notebook in Google Colab:
+Open [`mcq_mistral_lora_ft.ipynb`](mcq_mistral_lora_ft.ipynb) in Google Colab with a **T4 GPU** and run all cells. It:
 
-* [`notebooks/train_lora_colab.ipynb`](notebooks/train_lora_colab.ipynb)
+* loads Mistral-7B-Instruct in **4-bit NF4** (QLoRA) with `bitsandbytes`
+* attaches LoRA adapters (`r=8`, `lora_alpha=32`, `dropout=0.05`, `q_proj`/`v_proj`) with `peft`
+* masks the prompt so only the answer tokens are trained on, and appends EOS so the model learns to stop
+* trains with the Hugging Face `Trainer` (3 epochs, effective batch 8, cosine LR 2e-4) and reports eval loss and perplexity
+* saves the adapter and can push it to the Hub
 
-It will:
-
-* Load the Mistral-7B model in 8-bit using `bitsandbytes`
-* Apply LoRA adapters using `peft`
-* Train on a custom dataset of (Paragraph → MCQ) examples
+Put your dataset at `data/<name>.jsonl` (git-ignored) and set `DATA_PATH`. Each line is
+`{"instruction": "<paragraph>", "response": "<question, 4 options, correct answer>"}`; see `data/sample.jsonl`.
 
 ### 📘 Inference
 
-Use this notebook to generate MCQs using your fine-tuned model:
+The last section of the notebook loads the base model plus the adapter and calls `generate_mcq(paragraph)`.
+It uses `mcq_lora.build_prompt`, the same template as training.
 
-* [`notebooks/inference_colab.ipynb`](notebooks/inference_colab.ipynb)
+### 🧪 Checks without a GPU
+
+```bash
+pip install -r requirements-dev.txt
+ruff check . && pytest
+```
 
 ---
 
 ## 🧾 Requirements
 
-Install dependencies using pip:
-
 ```bash
 pip install -r requirements.txt
-```
-
-Contents of `requirements.txt`:
-
-```txt
-transformers==4.40.1
-peft==0.10.0
-datasets==2.19.1
-torch>=2.0
-bitsandbytes==0.43.1
-accelerate==0.29.3
-sentencepiece
 ```
 
 ---
@@ -73,10 +64,10 @@ sentencepiece
 ## 📊 Training Summary
 
 * **Model**: `mistralai/Mistral-7B-Instruct-v0.1`
-* **Adapter**: LoRA (`r=8`, `lora_alpha=32`, `dropout=0.05`)
-* **Training samples**: \~500 JSONL examples
+* **Adapter**: LoRA (`r=8`, `lora_alpha=32`, `dropout=0.05`, `q_proj`, `v_proj`)
+* **Training samples**: \~500 JSONL examples (private dataset)
 * **Epochs**: 3
-* **Final loss**: \~0.23
+* **Final loss**: \~0.23 (from the original Colab run; the notebook now prints train and eval loss so a re-run can confirm it)
 
 ---
 
@@ -107,7 +98,7 @@ Correct answer: b) The Lok Sabha
 ## 📩 Author
 
 This project is created and maintained by **Lingesh S**.
-Feel free to connect via [Hugging Face](https://huggingface.co/Lingesh-S) or [LinkedIn](https://www.linkedin.com/in/lingesh-s/).
+Feel free to connect via [Hugging Face](https://huggingface.co/Lingesh-S) or [LinkedIn](https://www.linkedin.com/in/lingesh-s29).
 
 ---
 
